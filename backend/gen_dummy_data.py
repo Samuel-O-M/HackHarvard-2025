@@ -259,8 +259,8 @@ def main():
     print()
     
     # Step 2: Set date range for reviews
-    # September 28, 2025 to October 3, 2025
-    start_date = datetime(2025, 9, 28, 8, 0, 0, tzinfo=timezone.utc)
+    # September 3, 2025 to October 3, 2025
+    start_date = datetime(2025, 9, 3, 8, 0, 0, tzinfo=timezone.utc)
     end_date = datetime(2025, 10, 3, 22, 0, 0, tzinfo=timezone.utc)
     
     # Step 3: Create notes and cards
