@@ -86,7 +86,7 @@ def generate_sentence_simple(target_word: str, translation: str) -> Tuple[bool, 
             return False, "", "", str(e)
     
     try:
-        prompt = f"""you are constructing a sentence for a language learner. the target word is "{target_word}" (which means "{translation}" in English) so it must be in the sentence. create a simple sentence with around 10 words that uses the target word. bold the target word using *word*. also provide an English translation of the sentence on a new line."""
+        prompt = f"""you are constructing a sentence for a language learner. the target word is "{target_word}" (which means "{translation}" in English) so it must be in the sentence. create a simple sentence with around 10 words that uses the target word. bold the target word using *word*. also provide an English translation of the sentence on a new line, also bold the translation using *translation*."""
         
         response = GEMINI_CLIENT.generate_content(prompt)
         

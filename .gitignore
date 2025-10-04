@@ -1,7 +1,7 @@
 .env
-backend/elevenlabs.txt
-backend/fsrs.txt
 backend/database.json
+backend/dummy_database.json
+backend/dummy_audio/*.mp3
 backend/audio/*.mp3
 */__pycache__/
 

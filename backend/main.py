@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from datetime import datetime, timezone
 import random
 from typing import Dict, Any
+import os
 
 import database
 import fsrs_controller
@@ -19,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for audio
+audio_directory = os.path.join(os.path.dirname(__file__), "audio")
+if os.path.exists(audio_directory):
+    app.mount("/audio", StaticFiles(directory=audio_directory), name="audio")
 
 # Initialize database on startup
 @app.on_event("startup")
