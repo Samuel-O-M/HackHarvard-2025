@@ -54,7 +54,7 @@ The app will be available at `http://localhost:3000`
 - **Recent Reviews**: Timeline of your latest review sessions
 
 ### Manage Page (`/manage`)
-- **Add New Words**: Form to input Spanish word + English translation
+- **Add New Words**: Form to input foreign language word + English translation
 - **Word List**: View all your learning notes
 - **Real-time Feedback**: Shows success/error messages
 - **Info Box**: Explains what happens when you add a word
@@ -120,7 +120,7 @@ frontend/
 ## 🎯 Usage Flow
 
 ### 1. Add Words (Manage Page)
-1. Enter Spanish word (e.g., "objetivo")
+1. Enter foreign language word (e.g., "objetivo")
 2. Enter English translation (e.g., "target")
 3. Click "Add Word"
 4. Wait 10-20 seconds for AI generation

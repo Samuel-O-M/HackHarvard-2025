@@ -29,7 +29,7 @@ The app will open at `http://localhost:3000`
 1. **Open the app**: `http://localhost:3000`
 2. **Go to Manage page**: Click "Manage" in navigation
 3. **Add a word**:
-   - Spanish: `hola`
+   - Foreign Language: `hola`
    - English: `hello`
    - Click "Add Word" (wait 10-20 seconds)
 4. **Go to Study page**: Click "Study" in navigation

@@ -104,7 +104,7 @@ function Study() {
         <div className="card bg-blue-50 border-2 border-blue-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-blue-900">
-              {isForward ? 'Spanish → English' : 'English → Spanish'}
+              {isForward ? 'Foreign Language → English' : 'English → Foreign Language'}
             </h3>
             <span className="text-sm text-blue-600 font-medium">
               {direction.toUpperCase()}
