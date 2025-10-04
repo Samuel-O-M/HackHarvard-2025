@@ -7,7 +7,7 @@ CORS(app)
 @app.route("/api/phrase", methods=['GET'])
 def get_phrase():
     data = {
-        "phrase": "Hello from the Flask server!"
+        "phrase": "I'm Samuel from the Flask server!"
     }
     return jsonify(data)
 
