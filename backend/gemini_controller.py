@@ -18,7 +18,7 @@ def initialize_client():
                 raise ValueError("GEMINI API key not found in environment variables.")
             
             genai.configure(api_key=api_key)
-            GEMINI_CLIENT = genai.GenerativeModel('gemini-pro')
+            GEMINI_CLIENT = genai.GenerativeModel('gemini-2.5-flash')
         except Exception as e:
             raise ConnectionError(f"Failed to initialize Gemini client: {e}") from e
 
