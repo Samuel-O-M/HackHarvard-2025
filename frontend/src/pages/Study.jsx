@@ -14,6 +14,38 @@ function Study() {
     fetchNextCard()
   }, [])
 
+  // Auto-play question audio when card appears
+  useEffect(() => {
+    if (currentCard && currentCard.note && !showAnswer) {
+      const { note, direction } = currentCard
+      const isForward = direction === 'forward'
+      const audioFilename = isForward ? note.word_audio : note.translation_audio
+      
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        playAudio(audioFilename)
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [currentCard, showAnswer])
+
+  // Auto-play answer audio when "show answer" is pressed
+  useEffect(() => {
+    if (showAnswer && currentCard && currentCard.note) {
+      const { note, direction } = currentCard
+      const isForward = direction === 'forward'
+      const audioFilename = isForward ? note.translation_audio : note.word_audio
+      
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        playAudio(audioFilename)
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [showAnswer])
+
   const fetchNextCard = async () => {
     try {
       setLoading(true)
