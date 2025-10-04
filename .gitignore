@@ -1,0 +1,6 @@
+.env
+backend/elevenlabs.txt
+backend/fsrs.txt
+backend/database.json
+backend/audio/*.mp3
+*/__pycache__/
