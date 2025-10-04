@@ -1,4 +1,4 @@
-const int buttons[] = {1,2,3,4};
+const int buttons[] = {2,3,4,5};
 const int numButtons = 4;
 
 int formerState[] = {LOW, LOW, LOW, LOW};
@@ -8,7 +8,7 @@ void setup() {
   //Activa los pines
   for (int i = 0; i < numButtons; i++)
     {
-      pinMode(buttons[i], INPUT);
+      pinMode(buttons[i]+1, INPUT);
     }   
 }
 
@@ -21,8 +21,8 @@ void loop() {
     if (State == HIGH && formerState[i] == LOW) // Se pone la condición de HIGH para que cuando se deje de pulsar no devuelva nada
     {
       //Returns the computer the value of the pin that has been pushed
-      Serial.println(buttons[i]);
-      delay(100);
+      Serial.println(i+1);
+      delay(200);
     }
     formerState[i] = State;
   }
