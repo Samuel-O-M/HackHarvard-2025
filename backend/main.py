@@ -340,6 +340,35 @@ async def optimize_fsrs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@app.get("/workload-retention")
+async def get_workload_retention():
+    """
+    Calculates workload (daily reviews) for different retention levels
+    Returns data for visualizing the workload vs retention curve
+    """
+    try:
+        data = database.read_data()
+        cards = data.get("cards", [])
+        
+        if not cards:
+            return {"data_points": []}
+        
+        # Calculate workload for retention levels from 70% to 99%
+        retention_levels = [0.70, 0.75, 0.80, 0.85, 0.90, 0.92, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99]
+        workload_data = []
+        
+        for retention in retention_levels:
+            workload = fsrs_controller.estimate_workload_for_retention(cards, retention)
+            workload_data.append({
+                "retention": retention,
+                "workload": workload
+            })
+        
+        return {"data_points": workload_data}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

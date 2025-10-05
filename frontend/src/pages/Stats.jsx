@@ -12,9 +12,12 @@ function Stats() {
   const [sortOrder, setSortOrder] = useState('asc')
   const [optimizing, setOptimizing] = useState(false)
   const [optimizeMessage, setOptimizeMessage] = useState('')
+  const [workloadData, setWorkloadData] = useState([])
+  const [loadingWorkload, setLoadingWorkload] = useState(false)
 
   useEffect(() => {
     fetchStats()
+    fetchWorkloadData()
   }, [])
 
   const fetchStats = async () => {
@@ -26,6 +29,19 @@ function Stats() {
       console.error('Error fetching stats:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchWorkloadData = async () => {
+    try {
+      setLoadingWorkload(true)
+      const response = await axios.get(`${API_URL}/workload-retention`)
+      setWorkloadData(response.data.data_points || [])
+    } catch (error) {
+      console.error('Error fetching workload data:', error)
+      setWorkloadData([])
+    } finally {
+      setLoadingWorkload(false)
     }
   }
 
@@ -192,29 +208,19 @@ function Stats() {
     return filtered
   }, [getEnrichedCards, searchTerm, sortBy, sortOrder])
 
-  // Calculate workload vs retention data
-  const workloadRetentionData = useMemo(() => {
-    if (!stats || !stats.cards) return []
-    
-    const data = []
-    const retentionPoints = [0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-    
-    retentionPoints.forEach(retention => {
-      // Simplified workload calculation
-      // In reality, this should use FSRS's actual workload calculation
-      // Assuming average reviews per day based on retention
-      const avgInterval = retention === 0.90 ? 30 : (1 / (1 - retention)) * 10
-      const workload = stats.cards.length / avgInterval
-      
-      data.push({
-        retention: (retention * 100).toFixed(0),
-        workload: Math.round(workload),
-        color: retention === 0.90 ? '#22c55e' : retention < 0.90 ? '#ef4444' : '#3b82f6'
-      })
-    })
-    
-    return data
-  }, [stats])
+  // Get color for retention level
+  const getRetentionColor = (retention) => {
+    if (retention <= 0.90) return '#22c55e' // Green for sustainable (<=90%)
+    if (retention <= 0.95) return '#fbbf24' // Yellow for efficiency frontier (90-95%)
+    return '#ef4444' // Red for high-cost (>95%)
+  }
+
+  // Get zone label for retention level
+  const getRetentionZone = (retention) => {
+    if (retention <= 0.90) return 'Sustainable Zone'
+    if (retention <= 0.95) return 'Efficiency Frontier'
+    return 'High-Cost Zone'
+  }
 
   const getStateName = (state) => {
     const states = ['New', 'Learning', 'Review', 'Relearning']
@@ -445,7 +451,9 @@ function Stats() {
   }
 
   function renderAdvancedView() {
-    const maxWorkload = Math.max(...workloadRetentionData.map(d => d.workload), 1)
+    const maxWorkload = workloadData.length > 0 
+      ? Math.max(...workloadData.map(d => d.workload), 1)
+      : 1
     
     return (
       <>
@@ -482,50 +490,214 @@ function Stats() {
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Workload vs Retention</h2>
             <p className="text-gray-600 mb-6">
-              Expected daily reviews for different retention targets. Green indicates optimal retention (90%).
+              The cost of memory: Daily review workload for different retention targets. 
+              The curve demonstrates the exponential cost of pursuing near-perfect retention.
             </p>
             
-            <div className="space-y-4">
-              {workloadRetentionData.map((point, index) => (
-                <div key={index} className="relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">
-                      Retention: {point.retention}%
-                    </span>
-                    <span className="text-sm font-bold text-gray-900">
-                      {point.workload} reviews/day
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-8 overflow-hidden">
-                    <div
-                      className="h-full flex items-center justify-end px-3 text-white text-sm font-bold transition-all"
-                      style={{
-                        width: `${(point.workload / maxWorkload) * 100}%`,
-                        backgroundColor: point.color,
-                        minWidth: point.workload > 0 ? '50px' : '0'
-                      }}
+            {loadingWorkload ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : workloadData.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                No data available. Add some cards to see the workload curve.
+              </div>
+            ) : (
+              <>
+                {/* SVG Graph */}
+                <div className="relative w-full" style={{ height: '400px' }}>
+                  <svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet">
+                    {/* Define gradient zones */}
+                    <defs>
+                      <linearGradient id="workloadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.2" />
+                        <stop offset="50%" stopColor="#22c55e" stopOpacity="0.2" />
+                        <stop offset="75%" stopColor="#fbbf24" stopOpacity="0.2" />
+                        <stop offset="85%" stopColor="#ef4444" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Background zones */}
+                    <rect x="50" y="20" width="700" height="320" fill="url(#workloadGradient)" />
+                    
+                    {/* Grid lines */}
+                    {[0, 1, 2, 3, 4, 5].map(i => (
+                      <line 
+                        key={`grid-${i}`}
+                        x1="50" 
+                        y1={20 + (i * 320/5)} 
+                        x2="750" 
+                        y2={20 + (i * 320/5)} 
+                        stroke="#e5e7eb" 
+                        strokeWidth="1"
+                      />
+                    ))}
+                    
+                    {/* Y-axis labels */}
+                    {[0, 1, 2, 3, 4, 5].map(i => {
+                      const value = Math.round(maxWorkload * (5 - i) / 5)
+                      return (
+                        <text 
+                          key={`y-label-${i}`}
+                          x="40" 
+                          y={25 + (i * 320/5)} 
+                          textAnchor="end" 
+                          fontSize="12" 
+                          fill="#6b7280"
+                        >
+                          {value}
+                        </text>
+                      )
+                    })}
+                    
+                    {/* X-axis labels */}
+                    {workloadData.map((point, index) => {
+                      if (index % 2 === 0) { // Show every other label to avoid crowding
+                        const x = 50 + (index / (workloadData.length - 1)) * 700
+                        return (
+                          <text 
+                            key={`x-label-${index}`}
+                            x={x} 
+                            y="360" 
+                            textAnchor="middle" 
+                            fontSize="12" 
+                            fill="#6b7280"
+                          >
+                            {(point.retention * 100).toFixed(0)}%
+                          </text>
+                        )
+                      }
+                      return null
+                    })}
+                    
+                    {/* Axis labels */}
+                    <text x="400" y="395" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#374151">
+                      Desired Retention
+                    </text>
+                    <text 
+                      x="20" 
+                      y="200" 
+                      textAnchor="middle" 
+                      fontSize="14" 
+                      fontWeight="bold" 
+                      fill="#374151"
+                      transform="rotate(-90 20 200)"
                     >
-                      {point.workload > 0 && point.workload}
-                    </div>
-                  </div>
+                      Daily Workload (Reviews/Day)
+                    </text>
+                    
+                    {/* Draw the curve */}
+                    <path
+                      d={workloadData.map((point, index) => {
+                        const x = 50 + (index / (workloadData.length - 1)) * 700
+                        const y = 340 - ((point.workload / maxWorkload) * 320)
+                        return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    
+                    {/* Draw area under curve */}
+                    <path
+                      d={
+                        workloadData.map((point, index) => {
+                          const x = 50 + (index / (workloadData.length - 1)) * 700
+                          const y = 340 - ((point.workload / maxWorkload) * 320)
+                          return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                        }).join(' ') + 
+                        ` L 750 340 L 50 340 Z`
+                      }
+                      fill="#3b82f6"
+                      fillOpacity="0.1"
+                    />
+                    
+                    {/* Draw points */}
+                    {workloadData.map((point, index) => {
+                      const x = 50 + (index / (workloadData.length - 1)) * 700
+                      const y = 340 - ((point.workload / maxWorkload) * 320)
+                      const color = getRetentionColor(point.retention)
+                      
+                      return (
+                        <g key={`point-${index}`}>
+                          <circle 
+                            cx={x} 
+                            cy={y} 
+                            r="5" 
+                            fill={color}
+                            stroke="white"
+                            strokeWidth="2"
+                          />
+                        </g>
+                      )
+                    })}
+                  </svg>
                 </div>
-              ))}
-            </div>
+
+                {/* Data table */}
+                <div className="mt-8 overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Retention</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Daily Workload</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {workloadData.map((point, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {(point.retention * 100).toFixed(0)}%
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            {point.workload.toFixed(1)} reviews/day
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span 
+                              className="px-2 py-1 rounded text-xs font-medium"
+                              style={{ 
+                                backgroundColor: getRetentionColor(point.retention) + '33',
+                                color: getRetentionColor(point.retention)
+                              }}
+                            >
+                              {getRetentionZone(point.retention)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
 
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold text-gray-900 mb-2">Legend:</h3>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 rounded bg-red-500 mr-2"></div>
-                  <span>Low Retention (&lt;90%)</span>
+              <h3 className="font-semibold text-gray-900 mb-2">Understanding the Curve:</h3>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div className="flex items-start">
+                  <div className="w-4 h-4 rounded bg-green-500 mr-3 mt-0.5 flex-shrink-0"></div>
+                  <div>
+                    <span className="font-medium">Sustainable Zone (≤90%):</span> Efficient learning with manageable workload. 
+                    Most learners should target this range for long-term retention.
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 rounded bg-green-500 mr-2"></div>
-                  <span>Optimal (90%)</span>
+                <div className="flex items-start">
+                  <div className="w-4 h-4 rounded bg-yellow-500 mr-3 mt-0.5 flex-shrink-0"></div>
+                  <div>
+                    <span className="font-medium">Efficiency Frontier (90-95%):</span> Higher retention but with increasing workload. 
+                    Suitable for high-stakes learning or exam preparation.
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 rounded bg-blue-500 mr-2"></div>
-                  <span>High Retention (&gt;90%)</span>
+                <div className="flex items-start">
+                  <div className="w-4 h-4 rounded bg-red-500 mr-3 mt-0.5 flex-shrink-0"></div>
+                  <div>
+                    <span className="font-medium">High-Cost Zone (&gt;95%):</span> Exponentially increasing workload with diminishing returns. 
+                    Generally unsustainable for most learners.
+                  </div>
                 </div>
               </div>
             </div>

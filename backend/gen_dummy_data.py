@@ -5,7 +5,7 @@ This script:
 1. Clears the database.json file and audio directory
 2. Creates 50 Spanish words with A1-level sentences using Gemini API
 3. Generates audio files using ElevenLabs API
-4. Generates fake review logs between September 28 and October 3, 2025
+4. Generates fake review logs between September 3 and October 3, 2025
 
 Usage: python gen_dummy_data.py
 """
@@ -178,50 +178,99 @@ def create_note_with_cards(word, translation, note_id, creation_date):
     
     return note, forward_card, reverse_card
 
+def generate_card_difficulty_profile():
+    """
+    Generates a difficulty profile for a card - determines the likelihood of different ratings
+    
+    Returns:
+        tuple: (weights for [Again, Hard, Good, Easy], profile_name)
+    """
+    profile_type = random.random()
+    
+    if profile_type < 0.20:  # 20% - Very Easy Cards (user knows these well)
+        return [5, 10, 35, 50], "easy"
+    elif profile_type < 0.40:  # 20% - Hard Cards (user struggles with these)
+        return [40, 35, 20, 5], "hard"
+    elif profile_type < 0.60:  # 20% - Medium-Hard Cards
+        return [25, 35, 30, 10], "medium-hard"
+    elif profile_type < 0.80:  # 20% - Medium-Easy Cards
+        return [10, 20, 45, 25], "medium-easy"
+    else:  # 20% - Average Cards
+        return [15, 25, 40, 20], "average"
+
 def generate_review_logs(cards, start_date, end_date):
     """
     Generates fake review logs for cards between start_date and end_date
-    Simulates realistic study patterns
+    Simulates realistic study patterns with varied difficulty per card
     """
     print(f"📊 Generating review logs from {start_date.date()} to {end_date.date()}...")
     
     review_logs = []
     review_log_id = 1
     
-    # For each card, simulate multiple reviews
+    profile_stats = {"easy": 0, "hard": 0, "medium-hard": 0, "medium-easy": 0, "average": 0}
+    
     for card in cards:
         card_dict = card.copy()
-        current_date = start_date
         
-        # Each card gets reviewed 2-5 times during the week
-        num_reviews = random.randint(2, 5)
+        weights, profile_name = generate_card_difficulty_profile()
+        profile_stats[profile_name] += 1
         
+        if profile_name == "easy":
+            num_reviews = random.randint(3, 8)
+        elif profile_name == "hard":
+            num_reviews = random.randint(5, 12)
+        else:
+            num_reviews = random.randint(3, 9)
+        
+        # Get card creation date
+        initial_due = card_dict["fsrs_card"].get("due", "")
+        try:
+            card_creation_date = datetime.fromisoformat(initial_due.replace('Z', '+00:00'))
+        except:
+            card_creation_date = start_date
+        
+        last_review_time = None
+
         for review_num in range(num_reviews):
-            # Add some randomness to review timing
-            hours_offset = random.randint(0, 12)
-            minutes_offset = random.randint(0, 59)
-            review_datetime = current_date + timedelta(hours=hours_offset, minutes=minutes_offset)
+            # Calculate the base date for this review
+            if review_num == 0:
+                # First review happens within the first 2 days
+                base_date = card_creation_date + timedelta(days=random.uniform(0, 2))
+            else:
+                # Subsequent reviews are based on the FSRS due date
+                due_str = card_dict["fsrs_card"].get("due", "")
+                if due_str:
+                    try:
+                        base_date = datetime.fromisoformat(due_str.replace('Z', '+00:00'))
+                    except (ValueError, TypeError):
+                        # Fallback if due date is invalid
+                        base_date = last_review_time + timedelta(days=random.uniform(0.5, 3)) if last_review_time else card_creation_date
+                else:
+                    base_date = last_review_time + timedelta(days=random.uniform(0.5, 3)) if last_review_time else card_creation_date
+
+            # Add jitter to simulate user reviewing early or late
+            review_date = base_date + timedelta(days=random.uniform(-0.3, 0.5))
             
-            # Don't review beyond end_date
+            # Add a realistic random time of day
+            hour = random.choices(
+                list(range(8, 23)),
+                weights=[5, 10, 8, 6, 5, 4, 6, 8, 10, 12, 15, 18, 12, 8, 5]
+            )[0]
+            minute = random.randint(0, 59)
+            review_datetime = review_date.replace(hour=hour, minute=minute, second=random.randint(0, 59))
+
             if review_datetime > end_date:
                 break
             
-            # Simulate realistic ratings (weighted towards Good)
-            rating = random.choices([1, 2, 3, 4], weights=[10, 20, 50, 20])[0]
+            rating = random.choices([1, 2, 3, 4], weights=weights)[0]
             
-            # Get the card state before review for the log
-            card_before_review = card_dict["fsrs_card"].copy()
-            
-            # Review the card
             updated_fsrs_card, review_log = fsrs_controller.review_card(card_dict["fsrs_card"], rating)
             
-            # Update card state
             card_dict["fsrs_card"] = updated_fsrs_card
             
-            # Override the review datetime in the review log
             review_log["review_datetime"] = review_datetime.isoformat()
             
-            # Create review log entry
             review_log_entry = {
                 "id": review_log_id,
                 "card_id": card_dict["id"],
@@ -229,22 +278,20 @@ def generate_review_logs(cards, start_date, end_date):
             }
             review_logs.append(review_log_entry)
             review_log_id += 1
-            
-            # Update current date for next review
-            # Parse the due date from the updated card
-            due_str = updated_fsrs_card.get("due", "")
-            if due_str:
-                try:
-                    current_date = datetime.fromisoformat(due_str.replace('Z', '+00:00'))
-                except:
-                    current_date = review_datetime + timedelta(days=1)
-            else:
-                current_date = review_datetime + timedelta(days=1)
+            last_review_time = review_datetime
         
-        # Update the card in the original list with final state
         card["fsrs_card"] = card_dict["fsrs_card"]
     
     print(f"✅ Generated {len(review_logs)} review logs")
+    print(f"📈 Card difficulty distribution:")
+    total_cards = len(cards)
+    if total_cards > 0:
+        print(f"   - Easy learners: {profile_stats['easy']} cards ({profile_stats['easy']/total_cards*100:.1f}%)")
+        print(f"   - Hard learners: {profile_stats['hard']} cards ({profile_stats['hard']/total_cards*100:.1f}%)")
+        print(f"   - Medium-hard: {profile_stats['medium-hard']} cards ({profile_stats['medium-hard']/total_cards*100:.1f}%)")
+        print(f"   - Medium-easy: {profile_stats['medium-easy']} cards ({profile_stats['medium-easy']/total_cards*100:.1f}%)")
+        print(f"   - Average: {profile_stats['average']} cards ({profile_stats['average']/total_cards*100:.1f}%)")
+    
     return review_logs
 
 def main():
