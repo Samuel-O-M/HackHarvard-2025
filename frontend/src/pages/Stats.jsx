@@ -119,6 +119,34 @@ function Stats() {
       .slice(0, 10)
   }
 
+  // Calculate retrievability using FSRS formula
+  const calculateRetrievability = (fsrsCard) => {
+    try {
+      const now = new Date()
+      const due = new Date(fsrsCard.due)
+      const stability = fsrsCard.stability || 0
+      
+      if (stability === 0) return 0
+      
+      // FSRS retrievability formula: R = (1 + (t - due) / (9 * S))^(-1)
+      // where t is current time, due is due date, and S is stability
+      const timeDiff = (now - due) / (1000 * 60 * 60 * 24) // Convert to days
+      const retrievability = Math.pow(1 + timeDiff / (9 * stability), -1)
+      
+      // Clamp between 0 and 1
+      return Math.max(0, Math.min(1, retrievability))
+    } catch (error) {
+      return 0
+    }
+  }
+
+  // Calculate mastery score (retrievability * stability)
+  const calculateMasteryScore = (fsrsCard) => {
+    const retrievability = calculateRetrievability(fsrsCard)
+    const stability = fsrsCard.stability || 0
+    return retrievability * stability
+  }
+
   const getRatingDistribution = () => {
     if (!stats || !stats.review_logs) return { 1: 0, 2: 0, 3: 0, 4: 0 }
     
@@ -139,11 +167,13 @@ function Stats() {
     
     return stats.cards.map(card => {
       const note = stats.learning_notes.find(n => n.id === card.note_id)
+      const masteryScore = calculateMasteryScore(card.fsrs_card)
       return {
         ...card,
         note,
         word: note?.word || 'N/A',
-        translation: note?.translation || 'N/A'
+        translation: note?.translation || 'N/A',
+        masteryScore
       }
     })
   }, [stats])
@@ -193,6 +223,10 @@ function Stats() {
         case 'state':
           aVal = a.fsrs_card.state || 0
           bVal = b.fsrs_card.state || 0
+          break
+        case 'mastery':
+          aVal = a.masteryScore || 0
+          bVal = b.masteryScore || 0
           break
         default:
           aVal = a.id
@@ -739,6 +773,7 @@ function Stats() {
                 >
                   <option value="id">ID</option>
                   <option value="word">Word</option>
+                  <option value="mastery">Mastery Score</option>
                   <option value="stability">Stability</option>
                   <option value="difficulty">Difficulty</option>
                   <option value="due">Due Date</option>
@@ -764,6 +799,7 @@ function Stats() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Translation</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Direction</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mastery</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stability</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
@@ -795,6 +831,16 @@ function Stats() {
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getStateColor(fsrs.state)}`}>
                             {getStateName(fsrs.state)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <span className={`font-bold ${
+                            card.masteryScore > 5 ? 'text-green-600' :
+                            card.masteryScore > 2 ? 'text-blue-600' :
+                            card.masteryScore > 0.5 ? 'text-orange-600' :
+                            'text-red-600'
+                          }`}>
+                            {card.masteryScore.toFixed(2)}
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
@@ -836,6 +882,14 @@ function Stats() {
             <div className="card">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Metrics</h3>
               <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Avg Mastery:</span>
+                  <span className="font-bold text-hearsay-blue">
+                    {getEnrichedCards.length > 0 
+                      ? (getEnrichedCards.reduce((sum, c) => sum + (c.masteryScore || 0), 0) / getEnrichedCards.length).toFixed(2)
+                      : '0.00'}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Avg Stability:</span>
                   <span className="font-bold">{getAverageStability()} days</span>
