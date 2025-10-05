@@ -7,6 +7,7 @@ function Study() {
   const [showAnswer, setShowAnswer] = useState(false)
   const [message, setMessage] = useState('')
   const [backendUrl, setBackendUrl] = useState('')
+  const [defaultAudio, setDefaultAudio] = useState('word') // 'word' or 'sentence'
 
   useEffect(() => {
     initializeBackend()
@@ -67,7 +68,14 @@ function Study() {
     if (currentCard && currentCard.note && !showAnswer) {
       const { note, direction } = currentCard
       const isForward = direction === 'forward'
-      const audioFilename = isForward ? note.word_audio : note.translation_audio
+      
+      // Use defaultAudio preference to determine which audio to play
+      let audioFilename
+      if (defaultAudio === 'word') {
+        audioFilename = isForward ? note.word_audio : note.translation_audio
+      } else {
+        audioFilename = isForward ? note.sentence_audio : note.sentence_translation_audio
+      }
       
       // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
@@ -76,14 +84,21 @@ function Study() {
       
       return () => clearTimeout(timer)
     }
-  }, [currentCard, showAnswer])
+  }, [currentCard, showAnswer, defaultAudio])
 
   // Auto-play answer audio when "show answer" is pressed
   useEffect(() => {
     if (showAnswer && currentCard && currentCard.note) {
       const { note, direction } = currentCard
       const isForward = direction === 'forward'
-      const audioFilename = isForward ? note.translation_audio : note.word_audio
+      
+      // Use defaultAudio preference to determine which audio to play
+      let audioFilename
+      if (defaultAudio === 'word') {
+        audioFilename = isForward ? note.translation_audio : note.word_audio
+      } else {
+        audioFilename = isForward ? note.sentence_translation_audio : note.sentence_audio
+      }
       
       // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
@@ -92,7 +107,7 @@ function Study() {
       
       return () => clearTimeout(timer)
     }
-  }, [showAnswer])
+  }, [showAnswer, defaultAudio])
 
   const fetchNextCard = async () => {
     try {
@@ -150,9 +165,9 @@ function Study() {
 
     return (
       <div className="space-y-6">
-        {/* Question Side */}
+        {/* Main Card with Question and Answer */}
         <div className="card bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-hearsay-cyan">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold bg-gradient-to-r from-hearsay-cyan to-hearsay-purple bg-clip-text text-transparent">
               {isForward ? 'Foreign Language → English' : 'English → Foreign Language'}
             </h3>
@@ -161,92 +176,105 @@ function Study() {
             </span>
           </div>
 
-          <div className="space-y-4">
-            {/* Word */}
-            <div className="flex items-center justify-between bg-white p-4 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Word:</p>
+          <div className="space-y-6">
+            {/* Question Section */}
+            <div className="space-y-3">
+              {/* Question Word */}
+              <div className="flex items-center justify-between bg-white p-4 rounded-lg border-2 border-blue-200">
                 <p className="text-3xl font-bold text-gray-900">
                   {isForward ? note.word : note.translation}
                 </p>
-              </div>
-              <button 
-                onClick={() => playAudio(isForward ? note.word_audio : note.translation_audio)}
-                className="btn btn-primary text-2xl"
-              >
-                🔊
-              </button>
-            </div>
-
-            {/* Sentence */}
-            <div className="bg-white p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-500">Sentence:</p>
                 <button 
-                  onClick={() => playAudio(isForward ? note.sentence_audio : note.sentence_translation_audio)}
-                  className="btn btn-secondary text-xl"
+                  onClick={() => playAudio(isForward ? note.word_audio : note.translation_audio)}
+                  className="btn btn-primary text-2xl"
                 >
                   🔊
                 </button>
               </div>
-              <p className="text-xl text-gray-900 leading-relaxed">
-                {isForward 
-                  ? note.sentence.replace(/\*/g, '') 
-                  : note.sentence_translation}
-              </p>
-            </div>
-          </div>
 
-          <button 
-            onClick={() => setShowAnswer(!showAnswer)}
-            className="btn btn-primary w-full mt-6"
-          >
-            {showAnswer ? 'Hide Answer' : 'Show Answer'}
-          </button>
-        </div>
-
-        {/* Answer Side */}
-        {showAnswer && (
-          <div className="card bg-green-50 border-2 border-green-200 animate-fade-in">
-            <h3 className="text-lg font-semibold text-green-900 mb-4">Answer</h3>
-            
-            <div className="space-y-4">
-              {/* Translation */}
-              <div className="flex items-center justify-between bg-white p-4 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Translation:</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {isForward ? note.translation : note.word}
+              {/* Question Sentence */}
+              <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <p className="text-xl text-gray-900 leading-relaxed flex-1">
+                    {isForward 
+                      ? note.sentence.replace(/\*/g, '') 
+                      : note.sentence_translation}
                   </p>
-                </div>
-                <button 
-                  onClick={() => playAudio(isForward ? note.translation_audio : note.word_audio)}
-                  className="btn btn-success text-2xl"
-                >
-                  🔊
-                </button>
-              </div>
-
-              {/* Translation Sentence */}
-              <div className="bg-white p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-500">Translation:</p>
                   <button 
-                    onClick={() => playAudio(isForward ? note.sentence_translation_audio : note.sentence_audio)}
-                    className="btn btn-secondary text-xl"
+                    onClick={() => playAudio(isForward ? note.sentence_audio : note.sentence_translation_audio)}
+                    className="btn btn-secondary text-xl ml-3"
                   >
                     🔊
                   </button>
                 </div>
-                <p className="text-xl text-gray-900 leading-relaxed">
-                  {isForward 
-                    ? note.sentence_translation 
-                    : note.sentence.replace(/\*/g, '')}
-                </p>
               </div>
             </div>
 
-            {/* Rating Buttons */}
+            {/* Answer Section */}
+            <div className="space-y-3">
+              {/* Answer Word */}
+              <div className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                showAnswer 
+                  ? 'bg-green-50 border-green-300' 
+                  : 'bg-gray-100 border-gray-300'
+              }`}>
+                {showAnswer ? (
+                  <>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {isForward ? note.translation : note.word}
+                    </p>
+                    <button 
+                      onClick={() => playAudio(isForward ? note.translation_audio : note.word_audio)}
+                      className="btn btn-success text-2xl"
+                    >
+                      🔊
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full h-12 flex items-center">
+                    <div className="text-2xl text-gray-400">___________</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Answer Sentence */}
+              <div className={`p-4 rounded-lg border-2 transition-all ${
+                showAnswer 
+                  ? 'bg-green-50 border-green-300' 
+                  : 'bg-gray-100 border-gray-300'
+              }`}>
+                {showAnswer ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-xl text-gray-900 leading-relaxed flex-1">
+                      {isForward 
+                        ? note.sentence_translation 
+                        : note.sentence.replace(/\*/g, '')}
+                    </p>
+                    <button 
+                      onClick={() => playAudio(isForward ? note.sentence_translation_audio : note.sentence_audio)}
+                      className="btn btn-secondary text-xl ml-3"
+                    >
+                      🔊
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full h-8 flex items-center">
+                    <div className="text-xl text-gray-400">___________</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Show Answer Button or Rating Buttons */}
+          {!showAnswer ? (
+            <button 
+              onClick={() => setShowAnswer(true)}
+              className="btn btn-primary w-full mt-6 py-4 text-lg"
+            >
+              Show Answer
+            </button>
+          ) : (
             <div className="mt-6 space-y-3">
               <p className="text-center text-sm text-gray-600 font-medium">How well did you know this?</p>
               <div className="grid grid-cols-4 gap-3">
@@ -292,8 +320,8 @@ function Study() {
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     )
   }
@@ -326,9 +354,31 @@ function Study() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Study Session</h1>
-        <p className="text-gray-600">Review your flashcards and improve your vocabulary</p>
+      {/* Audio Toggle */}
+      <div className="mb-6 flex items-center justify-center gap-3">
+        <span className="text-sm text-gray-600 font-medium">Default Audio:</span>
+        <div className="inline-flex rounded-lg border-2 border-hearsay-cyan overflow-hidden">
+          <button
+            onClick={() => setDefaultAudio('word')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              defaultAudio === 'word'
+                ? 'bg-hearsay-cyan text-white'
+                : 'bg-white text-hearsay-cyan hover:bg-cyan-50'
+            }`}
+          >
+            Word
+          </button>
+          <button
+            onClick={() => setDefaultAudio('sentence')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              defaultAudio === 'sentence'
+                ? 'bg-hearsay-cyan text-white'
+                : 'bg-white text-hearsay-cyan hover:bg-cyan-50'
+            }`}
+          >
+            Sentence
+          </button>
+        </div>
       </div>
 
       {renderCardContent()}
