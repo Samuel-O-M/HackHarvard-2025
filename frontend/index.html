@@ -1,29 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Flask Client</title>
-    <style>
-        body { font-family: sans-serif; }
-    </style>
-</head>
-<body>
-
-    <h1 id="server-phrase">Loading phrase from server...</h1>
-
-    <script>
-        fetch('http://127.0.0.1:5000/api/phrase')
-            .then(response => response.json())
-            .then(data => {
-                const phraseContainer = document.getElementById('server-phrase');
-                phraseContainer.textContent = data.phrase;
-            })
-            .catch(error => {
-                console.error('Error connecting to the server:', error);
-                const phraseContainer = document.getElementById('server-phrase');
-                phraseContainer.textContent = 'Error: Could not connect to the server.';
-            });
-    </script>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hearsay - Language, universally connected</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
+
