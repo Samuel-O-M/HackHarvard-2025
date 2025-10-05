@@ -222,6 +222,9 @@ async def get_next_card():
             "note": note
         }
         
+        # Reset card state for new card
+        card_state["state"] = "question_showing"
+        
         return result
     
     except Exception as e:
@@ -299,6 +302,7 @@ current_page_state = {"page": "study"}  # Default to study page
 
 # Global state for hardware actions (queue of pending actions)
 hardware_action_queue = []
+card_state = {"state": "question_showing"}  # "question_showing" or "answer_showing"
 
 # Timestamp of last successful hardware input (for cooldown)
 last_hardware_input_time = 0
@@ -333,6 +337,13 @@ async def get_current_page():
     """
     return current_page_state
 
+@app.get("/hardware/card-state")
+async def get_card_state():
+    """
+    Gets the current state of the card being studied (question or answer showing)
+    """
+    return card_state
+
 @app.post("/hardware/input")
 async def hardware_input(request_body: dict):
     """
@@ -364,6 +375,7 @@ async def hardware_input(request_body: dict):
         
         if action == "show_card":
             hardware_action_queue.append({"action": "show_card"})
+            card_state["state"] = "answer_showing"
             return {"status": "ok", "action": "show_card"}
         
         elif action == "submit_rating":
@@ -375,6 +387,7 @@ async def hardware_input(request_body: dict):
                 raise HTTPException(status_code=400, detail="Rating must be 1, 2, 3, or 4")
             
             hardware_action_queue.append({"action": "submit_rating", "rating": rating})
+            card_state["state"] = "question_showing" # Reset state after rating
             # Update last input time when rating is submitted (action is complete)
             last_hardware_input_time = current_time
             return {"status": "ok", "action": "submit_rating", "rating": rating}

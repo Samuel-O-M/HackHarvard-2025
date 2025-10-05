@@ -35,12 +35,23 @@ sensor_x_buffer = deque(maxlen=SENSOR_WINDOW_SIZE)
 sensor_y_buffer = deque(maxlen=SENSOR_WINDOW_SIZE)
 
 # State machine for each sensor
-# States: 'idle', 'hand_detected', 'waiting_for_removal'
+# States: 'idle', 'waiting_for_removal'
 sensor_x_state = 'idle'
 sensor_y_state = 'idle'
-sensor_x_detect_time = 0
-sensor_y_detect_time = 0
-WAIT_TIME = 1.0  # seconds to wait after detection
+
+def get_card_state():
+    """Get card state from backend (question_showing or answer_showing)"""
+    try:
+        response = requests.get(f"{BACKEND_URL}/hardware/card-state", timeout=1)
+        if response.status_code == 200:
+            state = response.json().get("state")
+            if state in ["question_showing", "answer_showing"]:
+                return state
+        # Default to question_showing on error or invalid state
+        return "question_showing"
+    except requests.exceptions.RequestException:
+        # Default if backend is unreachable
+        return "question_showing"
 
 def send_hardware_input(action, rating=None):
     """Send hardware input to backend"""
@@ -91,68 +102,62 @@ def check_hand_removed(buffer):
     return removals >= SENSOR_DETECTION_COUNT
 
 def process_sensor_data(distance_x, distance_y):
-    """Process sensor readings and trigger actions if needed"""
-    global sensor_x_state, sensor_y_state, sensor_x_detect_time, sensor_y_detect_time
-    
-    current_time = time.time()
-    
-    # Add readings to buffers
+    """Process sensor readings and trigger actions based on state."""
+    global sensor_x_state, sensor_y_state
+
+    # Add latest readings to buffers
     sensor_x_buffer.append(distance_x)
     sensor_y_buffer.append(distance_y)
-    
-    # Process Sensor X (Hard rating)
+
+    # --- Sensor X (Hard rating) ---
     if sensor_x_state == 'idle':
-        # Waiting for hand detection
         if check_hand_present(sensor_x_buffer):
             print(f"\n🔴 Sensor X: Hand detected! ({SENSOR_DETECTION_COUNT}/{SENSOR_WINDOW_SIZE} < {SENSOR_THRESHOLD}cm)")
-            sensor_x_state = 'hand_detected'
-            sensor_x_detect_time = current_time
-    
-    elif sensor_x_state == 'hand_detected':
-        # Wait 1 second after detection
-        if current_time - sensor_x_detect_time >= WAIT_TIME:
-            print(f"🔴 Sensor X: Waiting for hand removal...")
+            
+            card_state = get_card_state()
+            if card_state == "question_showing":
+                print("🔴 Sensor X: Sending 'show_card'...")
+                send_hardware_input("show_card")
+            else:  # answer_showing
+                print("🔴 Sensor X: Sending 'Hard' rating...")
+                send_hardware_input("submit_rating", 1)  # Hard
+
+            # Wait 1 sec, then wait for hand removal
+            time.sleep(1.0)
+            print("🔴 Sensor X: Waiting for hand removal...")
             sensor_x_state = 'waiting_for_removal'
-            # Clear buffer to get fresh readings for removal detection
             sensor_x_buffer.clear()
-    
+
     elif sensor_x_state == 'waiting_for_removal':
-        # Waiting for hand removal
         if check_hand_removed(sensor_x_buffer):
-            print(f"🔴 Sensor X: Hand removed! Sending Hard rating...")
-            send_hardware_input("show_card")
-            time.sleep(0.1)
-            send_hardware_input("submit_rating", 1)  # Hard
+            print("🔴 Sensor X: Hand removed.\n")
             sensor_x_state = 'idle'
             sensor_x_buffer.clear()
-            print()
-    
-    # Process Sensor Y (Good rating)
+
+    # --- Sensor Y (Good rating) ---
     if sensor_y_state == 'idle':
-        # Waiting for hand detection
         if check_hand_present(sensor_y_buffer):
             print(f"\n🟢 Sensor Y: Hand detected! ({SENSOR_DETECTION_COUNT}/{SENSOR_WINDOW_SIZE} < {SENSOR_THRESHOLD}cm)")
-            sensor_y_state = 'hand_detected'
-            sensor_y_detect_time = current_time
-    
-    elif sensor_y_state == 'hand_detected':
-        # Wait 1 second after detection
-        if current_time - sensor_y_detect_time >= WAIT_TIME:
-            print(f"🟢 Sensor Y: Waiting for hand removal...")
+            
+            card_state = get_card_state()
+            if card_state == "question_showing":
+                print("🟢 Sensor Y: Sending 'show_card'...")
+                send_hardware_input("show_card")
+            else:  # answer_showing
+                print("🟢 Sensor Y: Sending 'Good' rating...")
+                send_hardware_input("submit_rating", 3)  # Good
+
+            # Wait 1 sec, then wait for hand removal
+            time.sleep(1.0)
+            print("🟢 Sensor Y: Waiting for hand removal...")
             sensor_y_state = 'waiting_for_removal'
-            # Clear buffer to get fresh readings for removal detection
             sensor_y_buffer.clear()
-    
+            
     elif sensor_y_state == 'waiting_for_removal':
-        # Waiting for hand removal
         if check_hand_removed(sensor_y_buffer):
-            print(f"🟢 Sensor Y: Hand removed! Sending Good rating...")
-            send_hardware_input("show_card")
-            time.sleep(0.1)
-            send_hardware_input("submit_rating", 3)  # Good
+            print("🟢 Sensor Y: Hand removed.\n")
             sensor_y_state = 'idle'
             sensor_y_buffer.clear()
-            print()
 
 try:
     # Establish Arduino connection
