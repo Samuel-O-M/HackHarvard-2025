@@ -140,9 +140,9 @@ function Manage() {
             )}
 
             {/* Info Box */}
-            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">What happens when you add a word?</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="mt-6 bg-gradient-to-br from-cyan-50 to-blue-50 border border-hearsay-cyan rounded-lg p-4">
+              <h3 className="font-semibold bg-gradient-to-r from-hearsay-cyan to-hearsay-purple bg-clip-text text-transparent mb-2">What happens when you add a word?</h3>
+              <ul className="text-sm text-gray-700 space-y-1">
                 <li>✨ AI generates a contextual sentence</li>
                 <li>🔊 Creates 4 audio files (word, translation, sentences)</li>
                 <li>📇 Creates 2 flashcards (forward & reverse)</li>
@@ -159,7 +159,7 @@ function Manage() {
             
             {loadingNotes ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hearsay-blue mx-auto"></div>
                 <p className="text-gray-600 mt-4">Loading words...</p>
               </div>
             ) : notes.length === 0 ? (

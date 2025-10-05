@@ -237,7 +237,7 @@ function Stats() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-hearsay-blue mx-auto mb-4"></div>
           <p className="text-gray-600">Loading statistics...</p>
         </div>
       </div>
@@ -270,7 +270,7 @@ function Stats() {
           <select 
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hearsay-blue focus:border-transparent"
           >
             <option value="simple">Simple</option>
             <option value="advanced">Advanced</option>
@@ -288,12 +288,12 @@ function Stats() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <div className="card bg-gradient-to-br from-hearsay-cyan to-hearsay-blue text-white">
           <div className="text-sm font-medium opacity-90 mb-2">Total Words</div>
           <div className="text-4xl font-bold">{stats.learning_notes.length}</div>
         </div>
 
-        <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <div className="card bg-gradient-to-br from-hearsay-blue to-hearsay-purple text-white">
           <div className="text-sm font-medium opacity-90 mb-2">Total Cards</div>
           <div className="text-4xl font-bold">{stats.cards.length}</div>
         </div>
@@ -314,12 +314,12 @@ function Stats() {
         <div className="card">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Card States</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-lg">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-hearsay-cyan rounded-full mr-3"></div>
                 <span className="font-medium text-gray-900">New</span>
               </div>
-              <span className="text-2xl font-bold text-blue-600">{cardStates.new}</span>
+              <span className="text-2xl font-bold text-hearsay-cyan">{cardStates.new}</span>
             </div>
             
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
@@ -373,7 +373,7 @@ function Stats() {
                 <span className="text-2xl mr-3">🙂</span>
                 <span className="font-medium text-gray-900">Good</span>
               </div>
-              <span className="text-2xl font-bold text-blue-600">{ratingDist[3]}</span>
+              <span className="text-2xl font-bold text-hearsay-blue">{ratingDist[3]}</span>
             </div>
             
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
@@ -498,7 +498,7 @@ function Stats() {
             
             {loadingWorkload ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hearsay-blue"></div>
               </div>
             ) : workloadData.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -735,7 +735,7 @@ function Stats() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hearsay-blue"
                 >
                   <option value="id">ID</option>
                   <option value="word">Word</option>

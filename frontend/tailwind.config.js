@@ -7,8 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#3b82f6',
-        secondary: '#8b5cf6',
+        // Hearsay brand colors from logo
+        'hearsay-cyan': '#52C6DB',
+        'hearsay-blue': '#7DB8E8',
+        'hearsay-purple': '#A78BE8',
+        'hearsay-light': '#B8D4F1',
+      },
+      backgroundImage: {
+        'hearsay-gradient': 'linear-gradient(135deg, #52C6DB 0%, #7DB8E8 50%, #A78BE8 100%)',
       }
     },
   },

@@ -151,12 +151,12 @@ function Study() {
     return (
       <div className="space-y-6">
         {/* Question Side */}
-        <div className="card bg-blue-50 border-2 border-blue-200">
+        <div className="card bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-hearsay-cyan">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-blue-900">
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-hearsay-cyan to-hearsay-purple bg-clip-text text-transparent">
               {isForward ? 'Foreign Language → English' : 'English → Foreign Language'}
             </h3>
-            <span className="text-sm text-blue-600 font-medium">
+            <span className="text-sm text-hearsay-blue font-medium">
               {direction.toUpperCase()}
             </span>
           </div>
@@ -273,7 +273,7 @@ function Study() {
                 <button 
                   onClick={() => handleAnswer(3)}
                   disabled={loading}
-                  className="btn bg-blue-600 text-white hover:bg-blue-700 py-4 disabled:opacity-50"
+                  className="btn bg-gradient-to-r from-hearsay-cyan to-hearsay-blue text-white hover:shadow-lg py-4 disabled:opacity-50"
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-1">🙂</div>
@@ -302,7 +302,7 @@ function Study() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-hearsay-blue mx-auto mb-4"></div>
           <p className="text-gray-600">Loading card...</p>
         </div>
       </div>
