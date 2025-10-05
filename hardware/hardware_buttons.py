@@ -46,9 +46,11 @@ def send_hardware_input(action, rating=None):
             result = response.json()
             if result.get("status") == "ignored":
                 print(f"  → Action ignored: {result.get('reason')}")
+            elif result.get("status") == "cooldown":
+                print(f"  → Cooldown active: wait {result.get('wait_time', 0):.2f}s")
             else:
                 print(f"  → Backend confirmed: {action}" + (f" (rating: {rating})" if rating else ""))
-            return True
+            return result.get("status") == "ok"
         else:
             print(f"  → Backend error: {response.status_code}")
             return False

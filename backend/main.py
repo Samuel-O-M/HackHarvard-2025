@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import random
 from typing import Dict, Any
 import os
+import time
 
 import database
 import fsrs_controller
@@ -299,6 +300,10 @@ current_page_state = {"page": "study"}  # Default to study page
 # Global state for hardware actions (queue of pending actions)
 hardware_action_queue = []
 
+# Timestamp of last successful hardware input (for cooldown)
+last_hardware_input_time = 0
+HARDWARE_COOLDOWN = 1.0  # seconds
+
 @app.post("/hardware/page")
 async def set_current_page(request_body: dict):
     """
@@ -337,12 +342,20 @@ async def hardware_input(request_body: dict):
     - For show card: { "action": "show_card" }
     - For rating: { "action": "submit_rating", "rating": 1-4 }
     """
+    global last_hardware_input_time
+    
     try:
         print(f"Hardware input received: {request_body}")
         
         # Only process inputs when on study page
         if current_page_state["page"] != "study":
             return {"status": "ignored", "reason": "not on study page"}
+        
+        # Check cooldown - ensure at least 1 second has passed since last input
+        current_time = time.time()
+        time_since_last = current_time - last_hardware_input_time
+        if time_since_last < HARDWARE_COOLDOWN:
+            return {"status": "cooldown", "wait_time": HARDWARE_COOLDOWN - time_since_last}
         
         if "action" not in request_body:
             raise HTTPException(status_code=400, detail="Missing 'action' in request body")
@@ -362,6 +375,8 @@ async def hardware_input(request_body: dict):
                 raise HTTPException(status_code=400, detail="Rating must be 1, 2, 3, or 4")
             
             hardware_action_queue.append({"action": "submit_rating", "rating": rating})
+            # Update last input time when rating is submitted (action is complete)
+            last_hardware_input_time = current_time
             return {"status": "ok", "action": "submit_rating", "rating": rating}
         
         else:

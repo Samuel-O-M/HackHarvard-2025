@@ -80,12 +80,17 @@ python hardware_sensors.py
 
 ### Distance Sensor Controls (Study Mode Only)
 
-| Sensor | Detection | Action | Rating |
-|--------|-----------|--------|--------|
-| Sensor X | <30cm (4/5 pulses) | Show Card + Submit | Hard (1) |
-| Sensor Y | <30cm (4/5 pulses) | Show Card + Submit | Good (3) |
+| Sensor | Gesture | Action | Rating |
+|--------|---------|--------|--------|
+| Sensor X | Wave hand (3-step process) | Show Card + Submit | Hard (1) |
+| Sensor Y | Wave hand (3-step process) | Show Card + Submit | Good (3) |
 
-**Note**: Pulses happen every 0.2 seconds. A cooldown of 2 seconds prevents repeated triggers.
+**Gesture Process** (takes ~3 seconds total):
+1. **Place hand near sensor** (<30cm for ~1 second) → Detected
+2. **Wait 1 second** → System confirms deliberate gesture
+3. **Remove hand** (>30cm for ~1 second) → Rating submitted
+
+**Note**: Backend enforces 1-second cooldown between completed gestures.
 
 ### Behavior in Other Pages
 - **Manage page**: Hardware inputs are ignored
@@ -116,6 +121,13 @@ python hardware_sensors.py
 - Check sensor wiring (trigger and echo pins)
 - Adjust `SENSOR_THRESHOLD` in `config.py` if needed (default: 30cm)
 - Test sensors by checking the distance display in the terminal
+- **Remember**: You must remove your hand after detection (3-step process)
+- See `SENSOR_BEHAVIOR.md` for detailed detection logic
+
+### "Cooldown active" message
+- This is normal - backend enforces 1 second between completed gestures
+- Wait briefly before performing another gesture
+- Ensures system stability and realistic study pace
 
 ## Configuration Options
 

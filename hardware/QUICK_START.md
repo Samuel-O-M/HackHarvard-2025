@@ -56,9 +56,15 @@ Button Mapping: 1=Hard, 2=Medium, 3=Good, 4=Easy
 - **Button 3** → Show Card + Good rating
 - **Button 4** → Show Card + Easy rating
 
-### Sensors
-- **Sensor X** (distance1): Wave hand (<30cm, ~1 sec) → Hard rating
-- **Sensor Y** (distance2): Wave hand (<30cm, ~1 sec) → Good rating
+### Sensors (3-Step Gesture)
+1. **Place hand near sensor** (<30cm for ~1 sec) → Detected
+2. **Wait 1 second** → System confirms
+3. **Remove hand** (>30cm for ~1 sec) → Rating sent
+
+- **Sensor X** → Hard rating
+- **Sensor Y** → Good rating
+
+**Total time per gesture**: ~3 seconds + 1 second cooldown
 
 ## Troubleshooting
 
