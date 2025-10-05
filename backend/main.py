@@ -293,16 +293,99 @@ async def get_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# Global state for current page (used by hardware)
+current_page_state = {"page": "study"}  # Default to study page
+
+# Global state for hardware actions (queue of pending actions)
+hardware_action_queue = []
+
+@app.post("/hardware/page")
+async def set_current_page(request_body: dict):
+    """
+    Sets the current page for hardware context
+    
+    Request Body: { "page": "study" | "manage" | "stats" }
+    """
+    try:
+        if "page" not in request_body:
+            raise HTTPException(status_code=400, detail="Missing 'page' in request body")
+        
+        page = request_body["page"]
+        if page not in ["study", "manage", "stats"]:
+            raise HTTPException(status_code=400, detail="Invalid page. Must be 'study', 'manage', or 'stats'")
+        
+        current_page_state["page"] = page
+        return {"status": "ok", "current_page": page}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/hardware/page")
+async def get_current_page():
+    """
+    Gets the current page state
+    """
+    return current_page_state
+
 @app.post("/hardware/input")
 async def hardware_input(request_body: dict):
     """
-    A simple endpoint to log input from a hardware controller
+    Processes hardware input (buttons or sensors)
     
-    Request Body: { "input_type": "button", "value": "button_1" }
+    Request Body: 
+    - For show card: { "action": "show_card" }
+    - For rating: { "action": "submit_rating", "rating": 1-4 }
     """
     try:
-        print(request_body)
-        return {"status": "received"}
+        print(f"Hardware input received: {request_body}")
+        
+        # Only process inputs when on study page
+        if current_page_state["page"] != "study":
+            return {"status": "ignored", "reason": "not on study page"}
+        
+        if "action" not in request_body:
+            raise HTTPException(status_code=400, detail="Missing 'action' in request body")
+        
+        action = request_body["action"]
+        
+        if action == "show_card":
+            hardware_action_queue.append({"action": "show_card"})
+            return {"status": "ok", "action": "show_card"}
+        
+        elif action == "submit_rating":
+            if "rating" not in request_body:
+                raise HTTPException(status_code=400, detail="Missing 'rating' for submit_rating action")
+            
+            rating = request_body["rating"]
+            if rating not in [1, 2, 3, 4]:
+                raise HTTPException(status_code=400, detail="Rating must be 1, 2, 3, or 4")
+            
+            hardware_action_queue.append({"action": "submit_rating", "rating": rating})
+            return {"status": "ok", "action": "submit_rating", "rating": rating}
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/hardware/poll")
+async def poll_hardware_actions():
+    """
+    Polls for pending hardware actions and clears the queue
+    Returns all pending actions
+    """
+    try:
+        if hardware_action_queue:
+            # Get all actions and clear the queue
+            actions = hardware_action_queue.copy()
+            hardware_action_queue.clear()
+            return {"actions": actions}
+        else:
+            return {"actions": []}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 

@@ -1,10 +1,44 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { getApi } from './api/backend'
 import Stats from './pages/Stats'
 import Manage from './pages/Manage'
 import Study from './pages/Study'
 
+// Hook to notify backend of current page (for hardware control)
+function usePageTracking() {
+  const location = useLocation()
+  
+  useEffect(() => {
+    const notifyBackend = async () => {
+      try {
+        const api = await getApi()
+        
+        // Map routes to page names
+        let pageName = 'study'
+        if (location.pathname === '/stats') {
+          pageName = 'stats'
+        } else if (location.pathname === '/manage') {
+          pageName = 'manage'
+        }
+        
+        // Notify backend of current page
+        await api.post('/hardware/page', { page: pageName })
+      } catch (error) {
+        // Silently fail if backend is not available
+        console.log('Could not notify backend of page change:', error.message)
+      }
+    }
+    
+    notifyBackend()
+  }, [location])
+}
+
 function Navigation() {
   const location = useLocation()
+  
+  // Track page changes for hardware
+  usePageTracking()
   
   const isActive = (path) => location.pathname === path
   

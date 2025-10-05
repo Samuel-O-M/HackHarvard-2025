@@ -12,6 +12,45 @@ function Study() {
     initializeBackend()
   }, [])
 
+  // Poll for hardware actions
+  useEffect(() => {
+    let pollInterval
+
+    const pollHardware = async () => {
+      try {
+        const api = await getApi()
+        const response = await api.get('/hardware/poll')
+        
+        if (response.data.actions && response.data.actions.length > 0) {
+          // Process each action
+          for (const action of response.data.actions) {
+            if (action.action === 'show_card') {
+              // Show the answer
+              setShowAnswer(true)
+            } else if (action.action === 'submit_rating') {
+              // Submit the rating if answer is shown
+              if (showAnswer && currentCard) {
+                await handleAnswer(action.rating)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Silently fail - backend might not be available
+        console.log('Hardware poll error:', error.message)
+      }
+    }
+
+    // Poll every 200ms for responsive hardware interaction
+    pollInterval = setInterval(pollHardware, 200)
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
+    }
+  }, [showAnswer, currentCard]) // Re-create interval when these change
+
   const initializeBackend = async () => {
     try {
       const url = await getBackendUrl()
