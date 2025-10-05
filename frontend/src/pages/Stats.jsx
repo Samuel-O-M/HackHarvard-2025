@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
-
-const API_URL = '/api'
+import { getApi } from '../api/backend'
 
 function Stats() {
   const [stats, setStats] = useState(null)
@@ -23,7 +21,8 @@ function Stats() {
   const fetchStats = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_URL}/stats`)
+      const api = await getApi()
+      const response = await api.get('/stats')
       setStats(response.data)
     } catch (error) {
       console.error('Error fetching stats:', error)
@@ -35,7 +34,8 @@ function Stats() {
   const fetchWorkloadData = async () => {
     try {
       setLoadingWorkload(true)
-      const response = await axios.get(`${API_URL}/workload-retention`)
+      const api = await getApi()
+      const response = await api.get('/workload-retention')
       setWorkloadData(response.data.data_points || [])
     } catch (error) {
       console.error('Error fetching workload data:', error)
@@ -49,7 +49,8 @@ function Stats() {
     try {
       setOptimizing(true)
       setOptimizeMessage('Optimizing FSRS parameters...')
-      const response = await axios.post(`${API_URL}/optimize-fsrs`)
+      const api = await getApi()
+      const response = await api.post('/optimize-fsrs')
       setOptimizeMessage(response.data.message || 'Parameters optimized successfully!')
       setTimeout(() => setOptimizeMessage(''), 5000)
       await fetchStats()

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
-
-const API_URL = '/api'
+import { getApi } from '../api/backend'
 
 function Manage() {
   const [word, setWord] = useState('')
@@ -18,7 +16,8 @@ function Manage() {
   const fetchNotes = async () => {
     try {
       setLoadingNotes(true)
-      const response = await axios.get(`${API_URL}/notes`)
+      const api = await getApi()
+      const response = await api.get('/notes')
       setNotes(response.data)
     } catch (error) {
       console.error('Error fetching notes:', error)
@@ -39,7 +38,8 @@ function Manage() {
       setLoading(true)
       setMessage({ type: 'info', text: 'Creating note... This may take 10-20 seconds.' })
       
-      const response = await axios.post(`${API_URL}/notes`, {
+      const api = await getApi()
+      const response = await api.post('/notes', {
         word: word.trim(),
         translation: translation.trim()
       })

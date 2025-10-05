@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
-
-const API_URL = '/api'
-const AUDIO_BASE = 'http://localhost:8000/audio'
+import { getApi, getBackendUrl } from '../api/backend'
 
 function Study() {
   const [currentCard, setCurrentCard] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
   const [message, setMessage] = useState('')
+  const [backendUrl, setBackendUrl] = useState('')
 
   useEffect(() => {
-    fetchNextCard()
+    initializeBackend()
   }, [])
+
+  const initializeBackend = async () => {
+    try {
+      const url = await getBackendUrl()
+      setBackendUrl(url)
+      fetchNextCard()
+    } catch (error) {
+      setMessage('No backend available. Please start a backend server.')
+      console.error('Backend connection failed:', error)
+    }
+  }
 
   // Auto-play question audio when card appears
   useEffect(() => {
@@ -50,7 +59,8 @@ function Study() {
     try {
       setLoading(true)
       setShowAnswer(false)
-      const response = await axios.get(`${API_URL}/study/next`)
+      const api = await getApi()
+      const response = await api.get('/study/next')
       
       if (response.data.message) {
         setMessage(response.data.message)
@@ -72,7 +82,8 @@ function Study() {
     
     try {
       setLoading(true)
-      await axios.post(`${API_URL}/study/answer`, {
+      const api = await getApi()
+      await api.post('/study/answer', {
         card_id: currentCard.id,
         rating: rating
       })
@@ -87,8 +98,8 @@ function Study() {
   }
 
   const playAudio = (filename) => {
-    if (!filename) return
-    const audio = new Audio(`${AUDIO_BASE}/${filename}`)
+    if (!filename || !backendUrl) return
+    const audio = new Audio(`${backendUrl}/audio/${filename}`)
     audio.play().catch(err => console.error('Error playing audio:', err))
   }
 
