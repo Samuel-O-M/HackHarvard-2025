@@ -208,11 +208,11 @@ function Stats() {
     return filtered
   }, [getEnrichedCards, searchTerm, sortBy, sortOrder])
 
-  // Get color for retention level
+  // Get color for retention level (based on workload efficiency)
   const getRetentionColor = (retention) => {
-    if (retention <= 0.90) return '#22c55e' // Green for sustainable (<=90%)
-    if (retention <= 0.95) return '#fbbf24' // Yellow for efficiency frontier (90-95%)
-    return '#ef4444' // Red for high-cost (>95%)
+    if (retention <= 0.90) return '#22c55e' // Green for sustainable/efficient (<=90%)
+    if (retention <= 0.95) return '#fbbf24' // Yellow for moderate cost (90-95%)
+    return '#ef4444' // Red for high-cost/diminishing returns (>95%)
   }
 
   // Get zone label for retention level
@@ -490,8 +490,9 @@ function Stats() {
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Workload vs Retention</h2>
             <p className="text-gray-600 mb-6">
-              The cost of memory: Daily review workload for different retention targets. 
-              The curve demonstrates the exponential cost of pursuing near-perfect retention.
+              The cost of memory: This curve shows how much daily effort (reviews per day) is required 
+              to maintain different retention targets. Higher retention requires exponentially more reviews 
+              as you fight against your brain's natural forgetting curve.
             </p>
             
             {loadingWorkload ? (
@@ -677,26 +678,32 @@ function Stats() {
 
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-900 mb-2">Understanding the Curve:</h3>
-              <div className="space-y-2 text-sm text-gray-700">
+              <div className="space-y-3 text-sm text-gray-700">
+                <p className="font-medium text-gray-900">
+                  Key Insight: Higher retention targets require MORE frequent reviews, resulting in higher daily workload.
+                </p>
                 <div className="flex items-start">
                   <div className="w-4 h-4 rounded bg-green-500 mr-3 mt-0.5 flex-shrink-0"></div>
                   <div>
-                    <span className="font-medium">Sustainable Zone (≤90%):</span> Efficient learning with manageable workload. 
-                    Most learners should target this range for long-term retention.
+                    <span className="font-medium">Sustainable Zone (≤90%):</span> Balanced approach where you allow some 
+                    forgetting in exchange for manageable daily workload. Most efficient for long-term learning. 
+                    The "sweet spot" for most learners.
                   </div>
                 </div>
                 <div className="flex items-start">
                   <div className="w-4 h-4 rounded bg-yellow-500 mr-3 mt-0.5 flex-shrink-0"></div>
                   <div>
-                    <span className="font-medium">Efficiency Frontier (90-95%):</span> Higher retention but with increasing workload. 
-                    Suitable for high-stakes learning or exam preparation.
+                    <span className="font-medium">Efficiency Frontier (90-95%):</span> Pursuing higher retention means 
+                    more frequent reviews. Each percentage point starts to cost significantly more daily effort. 
+                    Suitable for exam preparation or high-stakes material.
                   </div>
                 </div>
                 <div className="flex items-start">
                   <div className="w-4 h-4 rounded bg-red-500 mr-3 mt-0.5 flex-shrink-0"></div>
                   <div>
-                    <span className="font-medium">High-Cost Zone (&gt;95%):</span> Exponentially increasing workload with diminishing returns. 
-                    Generally unsustainable for most learners.
+                    <span className="font-medium">High-Cost Zone (&gt;95%):</span> Near-perfect retention requires 
+                    extremely frequent reviews. Each additional percentage point demands exponentially more time. 
+                    The law of diminishing returns makes this unsustainable for most learners.
                   </div>
                 </div>
               </div>

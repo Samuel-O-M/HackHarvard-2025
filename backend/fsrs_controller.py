@@ -143,6 +143,9 @@ def estimate_workload_for_retention(cards: list, target_retention: float) -> flo
     This uses the FSRS formula to calculate expected intervals at different retention
     levels and estimates the resulting daily review count.
     
+    Higher retention → Shorter intervals → More reviews per day (higher workload)
+    Lower retention → Longer intervals → Fewer reviews per day (lower workload)
+    
     Args:
         cards: List of card dictionaries
         target_retention: Target retention rate (0.0 to 1.0)
@@ -164,26 +167,34 @@ def estimate_workload_for_retention(cards: list, target_retention: float) -> flo
             stability = fsrs_card.get("stability", 1.0)
             state = fsrs_card.get("state", 0)
             
-            # Calculate interval based on FSRS formula: I = S * (R^(1/DECAY_CONSTANT) - 1)
-            # Where R is retrievability (target retention), S is stability
-            # Simplified approximation of the FSRS interval calculation
-            
             # For new cards (state 0), use initial stability estimates
             if state == 0:
                 # New cards will be reviewed frequently initially
                 stability = 1.0
             
-            # Calculate interval using power law decay
-            # FSRS uses: I(R) = S * (R^(-1/d) - 1) where d is decay constant
-            # Approximation: interval ≈ S * (R^9) - accounts for steeper curve at high retention
+            # FSRS formula: I(R) = S * (R^(-1/d) - 1) where:
+            # - I is the interval in days
+            # - S is stability
+            # - R is retrievability (target_retention)
+            # - d is decay constant (typically around 0.3 for FSRS)
+            # 
+            # Key insight: As R approaches 1 (high retention), R^(-1/d) gets smaller,
+            # making the interval shorter, requiring more frequent reviews
+            
             if target_retention > 0:
-                # Use a formula that creates the characteristic steep curve
-                # Lower retention = longer intervals, higher retention = shorter intervals
-                decay_factor = 9.0  # Controls steepness of the curve
-                interval = stability * (target_retention ** decay_factor)
+                # Use FSRS-like power law with negative exponent
+                # This ensures: high retention → small interval → high workload
+                decay_constant = 0.3  # FSRS typical value
                 
-                # Minimum interval of 0.5 days
-                interval = max(0.5, interval)
+                # Calculate R^(-1/d) - 1
+                # When R is high (e.g., 0.99), R^(-1/0.3) = R^(-3.33) ≈ very small
+                # When R is low (e.g., 0.70), R^(-3.33) ≈ larger
+                power_term = target_retention ** (-1 / decay_constant)
+                interval = stability * (power_term - 1)
+                
+                # Clamp to reasonable bounds
+                # Minimum 0.5 days, maximum based on stability
+                interval = max(0.5, min(interval, stability * 50))
             else:
                 interval = stability
             
