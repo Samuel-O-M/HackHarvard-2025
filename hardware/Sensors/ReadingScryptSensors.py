@@ -18,9 +18,6 @@ last_sensor_data = {"distance1": "---", "distance2": "---"}
 
 @app.post("/update_distances")
 async def receive_sensor_data(data: SensorData):
-    """
-    Este endpoint recibe los datos de distancia del script intermediario.
-    """
     print(f"API recibió: {data}")
     # Actualiza el estado global con las nuevas distancias.
     last_sensor_data["distance1"] = data.distance1
@@ -30,10 +27,6 @@ async def receive_sensor_data(data: SensorData):
 
 @app.get("/", response_class=HTMLResponse)
 async def show_distances_page():
-    """
-    Este endpoint genera y devuelve una página HTML que muestra
-    las últimas distancias leídas de los sensores.
-    """
     dist1 = last_sensor_data["distance1"]
     dist2 = last_sensor_data["distance2"]
     

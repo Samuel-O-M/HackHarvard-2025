@@ -2,14 +2,11 @@ import serial
 import requests
 import time
 
-# --- CONFIGURATION ---
-ARDUINO_PORT = 'COM6'  # Asegúrate de que este es el puerto correcto
+# CONFIGURATION
+ARDUINO_PORT = 'COM6'
 BAUD_RATE = 9600
-# Apuntamos a un nuevo endpoint en nuestra API
 API_ENDPOINT_URL = 'http://127.0.0.1:8000/update_distances'
-# ---
 
-print("Iniciando script de lectura de sensores Arduino...")
 arduino = None
 
 try:
@@ -24,19 +21,17 @@ try:
             clean_data = raw_data.decode('utf-8').strip()
             print(f"Dato recibido del Arduino: '{clean_data}'")
 
-            # Verificamos si el dato empieza con "dist:"
             if clean_data.startswith("dist:"):
                 try:
-                    # Dividimos el string: "dist:15:120" -> ["dist", "15", "120"]
                     parts = clean_data.split(':')
-                    
-                    # Creamos el payload en formato JSON
+
+                    # JSON Format
                     payload = {
                         "distance1": int(parts[1]),
                         "distance2": int(parts[2])
                     }
 
-                    # Enviamos los datos a FastAPI
+                    # Send data
                     requests.post(API_ENDPOINT_URL, json=payload)
                     print(f"Payload enviado a la API: {payload}")
 
