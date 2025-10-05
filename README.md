@@ -225,7 +225,7 @@ FSRS (Free Spaced Repetition Scheduler) is a modern alternative to traditional a
 
 This project was built for HackHarvard 2025 by a team passionate about accessible education technology.
 
-**Team Members:** [Add your names here]
+**Team Members:** Samuel Orellana Mateo, Jacobo Tagua Santana, Arjun Pun Magar, David Majekodunmi
 
 **Want to contribute?** Reach out to the team or submit issues/PRs on the repository.
 
