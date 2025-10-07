@@ -112,7 +112,7 @@ function AppLayout() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/HackHarvard-2025">
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/app/*" element={<AppLayout />} />
